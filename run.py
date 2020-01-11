@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import random
 #---------
-from filterpy.stats import plot_covariance_ellipse
+from filterpy.stats import plot_covariance
 from filterpy.kalman import MerweScaledSigmaPoints
 from filterpy.kalman import UnscentedKalmanFilter as UKF
 from ukf import *
@@ -34,7 +34,7 @@ map_ = np.vstack((x1,y))
 nlandmarks = 10
 
 # draw map & get trajectory
-path = make_map(map_,nlandmarks)  
+path = make_map(map_,landmarks=nlandmarks)  
 
 # Extract starting position
 start_x = map_[0][0]
@@ -106,8 +106,11 @@ def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal
 
     # plot confidence ellipse after process model
     if i % ellipse_step == 0:
-        plot_covariance_ellipse(
+        plot_covariance(
                 (ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,
+                    facecolor='k', alpha=0.3)
+        plot_covariance(
+                (-10, 10), ukf.P[0:2, 0:2], std=6,
                     facecolor='k', alpha=0.3)
 
     # store current position    
@@ -140,7 +143,7 @@ def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal
 
     # plot confidence ellipse after sensor reading and kalman gain
     if i % ellipse_step == 0:
-                plot_covariance_ellipse(
+                plot_covariance(
                     (ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,
                     facecolor='g',alpha=0.8)
 
