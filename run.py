@@ -90,62 +90,7 @@ u = [[0,0]]
 counts = 100
    
 
-def localization(map_,nlandmarks,sigma_vel,sigma_steer,
-                    sigma_range,sigma_bearing,ellipse_step=1,step=10):
-    """[Locates the vehicle using known landmark locations]
-    
-    Arguments:
-        landmarks {[x,y],...} -- [List of landmark x,y points]
-        sigma_vel {[float]} -- [Variance in velocity]
-        sigma_steer {[float]} -- [variance in steer]
-        sigma_range {[float]} -- [variance in range]
-        sigma_bearing {[float]} -- [variance in bearing]
-    
-    Keyword Arguments:
-        ellipse_step {int} -- [time step to draw cnf ellipse] (default: {1})
-        step {int} -- [How often the UKF runs] (default: {10})
-    """
 
-    
-
-    '''
-    # compute MSP, and introduce our residual func that normalizes angles
-    points = MerweScaledSigmaPoints(n=3, alpha=.00001, beta=2, kappa=0, 
-                                    subtract=residual_x)
-
-    dt = 0.1
-    # unscented kalman object
-    ukf = UKF(dim_x=3, dim_z=2*nlandmarks, fx=move, hx=Hx,
-              dt=dt, points=points, x_mean_fn=state_mean, 
-              z_mean_fn=z_mean, residual_x=residual_x, 
-              residual_z=residual_h)
-    '''
-    
-
-    sim_pos = list(ukf.x.copy())  # store position of vehicle
-    sigmas = [sigma_range,sigma_bearing]    # store sensor variances
-
-   
-    
-
-    # set up path dictionary 
-    x_dict = [round(x,3) for x in path[0]]
-    y_dict = [round(y,3) for y in path[1]]
-    path_dict = dict((x,y) for x,y in zip(x_dict,y_dict) )
-    # get position of landmarks
-    lmark_pos = make_map.landmarks
-    
-   
-    # define commands
-    u = [0,0]
-    counts = 100
-    
-    # this needs to get shorter.....
-    fargs = [dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict]
-    animate(counts,*fargs)
-    
-    
-    return ukf
         
 vehicle_pos = []    
 p2t = [5,4]
