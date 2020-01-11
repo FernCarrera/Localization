@@ -69,11 +69,61 @@ def make_landmarks(num_landmk,mapv):
         lmarks.append([x,y])
     return lmarks
 
+# Animation functions
 
-
-
+def states_to_track(nstates,plot_colors,state_names,markers=None,timer=None,fname='fig'):
+    """Builds list that is used to animate in matplotlib
     
+    Arguments:
+        nstates {[int]} -- [Number of states to track]
+        plot_colors {[color,color...]} -- [list of color of each state]
+        state_names {[str,str...]} -- [names of states for use in legend]
     
+    Keyword Arguments:
+        markers {[str,str...]} -- [markers for states] (default: {None})
+    
+    Returns:
+        [list] -- [list object used for animation]
+
+        Example:
+
+        nstates = 3 
+        plotcols = ["0.8","orange","black"]
+        names = ['Sensor Data','Actual Movement','kalman_estimate']
+        markers = ['o','_',',']
+    """
 
 
+    if markers == None:
+        markers = [None]*nstates
+
+    if timer != None:
+        ax = fname.add_subplot(111)
+        time_text = ax.text(0.02,0.95,'',transform=ax.transAxes)
+
+    lines = []
+    for index in range(nstates):
+        state_set = plt.plot([],[],color=plot_colors[index],
+                                marker=markers[index],label=state_names[index])[0]
+        lines.append(state_set)
+
+    return lines
+
+
+def init(lines):
+    """Sets data to be plotted, called by FuncAnimation in matplotlib
+    
+    Arguments:
+        lines {[list]} -- [Line list returned in states_to_track()]
+        time_text {[matplotlib obj]} -- [Update text each epoch]
+
+
+    text/time example:
+        Inside function were the simulation is being simulated
+        time_text.set_text('Frame #: %.1f' % frame_number)
+    """
+    for line in lines:
+        line.set_data([],[])
+
+    #time_text.set_text('')
 
