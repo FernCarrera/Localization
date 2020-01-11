@@ -30,7 +30,7 @@ def point_to_follow(state,path,sigma_range,sigma_bearing):
     print("distance & heading to next point {}".format(dist_head))
     """
 
-    return dist_head
+    return dist_head,point_to_track
 
 
     

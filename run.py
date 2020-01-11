@@ -18,6 +18,7 @@ ax = fig.add_subplot(111)
 time_text = ax.text(0.02,0.95,'',transform=ax.transAxes)
 following_text = ax.text(0.02,0.85,'',transform=ax.transAxes)
 position_text = ax.text(0.02,0.75,'',transform=ax.transAxes)
+nextp_text = ax.text(0.02,0.65,'',transform=ax.transAxes)
 def plot_track(track):
     ''' draw the path that the vehicle took'''
     track = np.array(track)
@@ -147,9 +148,11 @@ def localization(map_,nlandmarks,sigma_vel,sigma_steer,
     return ukf
         
 vehicle_pos = []    
-
-def animate(i,dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict):
+p2t = [5,4]
+track = [0,0]
+def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict):
     """ Run simulation """
+    
     # move vehicle
     sim_pos = move(sim_pos,dt/step,u[-1],wheelbase=0.5)
     
@@ -163,17 +166,28 @@ def animate(i,dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict
                     facecolor='k', alpha=0.3)
 
     # store current position    
-    state = ukf.x
+    state = [round(ukf.x[0],3),round(ukf.x[1],3),round(ukf.x[2],3)    ]
     
 
     z = []
     z.extend(distance_to(lmark_pos,state,sigmas[0],sigmas[1])) 
     
     # distance and heading of next point to track
-    track = point_to_follow(state,path_dict,sigmas[0],sigmas[1])
-    
+    if ([state[0],state[1]] == [start_x,start_y]):
+        print('init')
+        vtrack,vp2t = point_to_follow(state,path_dict,sigmas[0],sigmas[1])
+        track.append(vtrack)
+        p2t.append(vp2t)
+    if ([state[0],state[1]] == p2t[-1]):
+        print('yes')
+        vtrack,vp2t = point_to_follow(state,path_dict,sigmas[0],sigmas[1])
+        track.append(vtrack)
+        p2t.append(vp2t)
+        
+       
+     
     # update heading
-    u.append([1,-track[1]])   
+    u.append([0.5,track[-1][1]])   
     
 
     # update the estimated position
@@ -187,9 +201,10 @@ def animate(i,dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict
 
     vehicle_pos.append([ukf.x[0],ukf.x[1]])
     time_text.set_text('Frame #: %.1f' % i)
-    following_text.set_text('Distance to next: {:.2f} Heading: {:.2f}'.format(track[0],track[1]))
-    position_text.set_text('Position - x: {:.2f} y: {:.2f}'.format(ukf.x[0],ukf.x[1]))
-    #print(i)
+    following_text.set_text('Distance to next: {:.2f} Heading: {:.2f}'.format(track[-1][0],track[-1][1]))
+    position_text.set_text('Current Position - x: {:.2f} y: {:.2f}'.format(ukf.x[0],ukf.x[1]))
+    nextp_text.set_text('Next point - x: {:.2f} y: {:.2f}'.format(p2t[-1][0],p2t[-1][1]))
+    
 
     for t,line in enumerate(lines):
         line.set_data(vehicle_pos[t][0],vehicle_pos[t][1])
@@ -200,6 +215,6 @@ def animate(i,dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict
 
 
 # run sim
-fargs = [dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict]
-ani = FuncAnimation(fig,animate,frames=500,interval=1,repeat=False,fargs= fargs)
+fargs = [dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict]
+ani = FuncAnimation(fig,animate,frames=700,interval=1,repeat=False,fargs= fargs)
 plt.show()
