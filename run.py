@@ -199,28 +199,7 @@ def animate(i,dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict
 
 
 
-
+# run sim
 fargs = [dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict]
 ani = FuncAnimation(fig,animate,frames=500,interval=1,repeat=False,fargs= fargs)
 plt.show()
-
-
-
-# run localization
-'''
-localization(
-    points, landmarks, sigma_vel=0.1, sigma_steer=np.radians(1),
-    sigma_range=0.3, sigma_bearing=0.1, step=1,
-    ellipse_step=20)
-plt.show()
-'''
-"""
-plt.figure()
-#bp.plot_measurements(*zip(*zs), alpha=0.5)
-plt.plot(*zip(*track), color='b', label='track')
-plt.scatter(zs[:,0],zs[:,1],alpha=0.5,label='measurements')
-plt.axis('equal')
-plt.legend(loc=4)
-plt.show()
-#bp.set_labels(title='Track vs Measurements', x='X', y='Y')
-"""
