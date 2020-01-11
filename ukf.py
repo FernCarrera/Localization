@@ -4,6 +4,41 @@ from math import atan2
 
 #--------------- Math -------------------
 
+
+def point_to_follow(state,path,sigma_range,sigma_bearing):
+    """Uses current location to find the next point in path
+    
+    Arguments:
+        state {[float]} -- [x-position]
+        path {[dictionary]} -- [stored path]
+    
+    Returns:
+        [float] -- [y-point in path to follow]
+    """
+ 
+    if state[0] in path:
+        track =  path[state[0]]
+    else:
+        track = path[min(path.keys(),key=lambda k: abs(k-state[0]))]
+
+    point_to_track = [state[0],track]
+    dist_head = distance_to(point_to_track,state,sigma_range,sigma_bearing)
+
+    """
+    print("current location {}".format( [state[0],state[1]]) )
+    print("position to track {}".format(point_to_track))
+    print("distance & heading to next point {}".format(dist_head))
+    """
+
+    return dist_head
+
+
+    
+
+def angle_between(x,y):
+    # key = cmp function
+    return min(y-x, y-x+360, y-x-360, key=abs)  
+
 def move(x, dt, u, wheelbase):
         hdg = x[2]
         vel = u[0]
@@ -52,9 +87,9 @@ def residual_h(a,b):
     return y
 
 def residual_x(a, b):
-    print(a)
-    print("----------")
-    print(b)
+    #print(a)
+    #print("----")
+    #print(b)
     y = a - b
     y[2] = normalize_angle(y[2])
     return y

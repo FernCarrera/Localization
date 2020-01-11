@@ -61,60 +61,81 @@ def localization(map_,nlandmarks,sigma_vel,sigma_steer,
         step {int} -- [How often the UKF runs] (default: {10})
     """
 
+    # Extract starting position
+    start_x = map_[0][0]; start_y = map_[1][0]
+    goal = [ map_[0][-1], map_[1][-1] ]
+
     # compute MSP, and introduce our residual func that normalizes angles
-    points = MerweScaledSigmaPoints(n=4, alpha=.00001, beta=2, kappa=0, 
+    points = MerweScaledSigmaPoints(n=3, alpha=.00001, beta=2, kappa=0, 
                                     subtract=residual_x)
 
     dt = 0.1
     # unscneted kalman object
-    ukf = UKF(dim_x=4, dim_z=2*nlandmarks, fx=update_state, hx=Hx,
+    ukf = UKF(dim_x=3, dim_z=2*nlandmarks, fx=move, hx=Hx,
               dt=dt, points=points, x_mean_fn=state_mean, 
               z_mean_fn=z_mean, residual_x=residual_x, 
               residual_z=residual_h)
 
     # define UKF matrices
-    ukf.x = np.array([1,1,1,1]) # x,y,velocity
-    ukf.P = np.diag([0.1,0.1,0.1,0.5])
+    
+    ukf.x = np.array([start_x,start_y,0]) # x,y,heading
+    ukf.P = np.diag([0.1,0.1,0.5])
     ukf.R = np.diag([sigma_range**2, sigma_bearing**2]*nlandmarks)
-    ukf.Q = np.eye(4)*0.0001
+    ukf.Q = np.eye(3)*0.0001
 
     sim_pos = list(ukf.x.copy())  # store position of vehicle
 
    
     path = make_map(map_,nlandmarks)  # draw map & get trajectory
 
+    x_dict = [round(x,3) for x in path[0]]
+    y_dict = [round(y,3) for y in path[1]]
+    path_dict = dict((x,y) for x,y in zip(x_dict,y_dict) )
+    
     lmark_pos = make_map.landmarks
     
     i = 0
-  
-    if (i % step == 0):
 
-       
+    # define commands
+    u = [0,0]
+    counts = 100
+    while (i != counts):
+
+        sim_pos = move(sim_pos,dt/step,u,wheelbase=0.5)
         #pdb.set_trace()
-        ukf.predict(cmd=[5,0],steps=30)
+        ukf.predict(u=u,wheelbase=0.5)
 
         if i % ellipse_step == 0:
             plot_covariance_ellipse(
-                    (ukf.x[0], ukf.x[1]), ukf.P[0:1, 0:1], std=6,
+                    (ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,
                      facecolor='k', alpha=0.3)
 
         # store current position
-        state = sim_pos[0],sim_pos[1]      
+        #state = sim_pos[0],sim_pos[1],sim_pos[2]      
+        state = ukf.x
         
+        if([state[0:2]] == goal):
+            print("goal")
+            return ukf
         z = []
+        
         z.extend(distance_to(lmark_pos,state,sigma_range,sigma_bearing)) 
         
+        # distance and heading of next point to track
+        track = point_to_follow(state,path_dict,sigma_range,sigma_bearing)
+        
+        # update heading
+        u = [1,track[1]]    
         # update the estimated position
         ukf.update(z,landmarks=lmark_pos)
         if i % ellipse_step == 0:
                     plot_covariance_ellipse(
-                        (ukf.x[0], ukf.x[1]), ukf.P[0:1, 0:1], std=6,
-                        facecolor='g', alpha=0.8)
-        
-        if (i == 10):
-            return ukf
+                        (ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,
+                        facecolor='g',alpha=0.8)
         
         i += 1
+        
+        
     #plot_track()
     return ukf
         
