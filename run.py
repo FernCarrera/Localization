@@ -15,6 +15,9 @@ import pdb
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
+time_text = ax.text(0.02,0.95,'',transform=ax.transAxes)
+following_text = ax.text(0.02,0.85,'',transform=ax.transAxes)
+position_text = ax.text(0.02,0.75,'',transform=ax.transAxes)
 def plot_track(track):
     ''' draw the path that the vehicle took'''
     track = np.array(track)
@@ -27,7 +30,7 @@ def plot_track(track):
 x1 = np.arange(0,10,1)   # x coord
 y = random.sample(range(0,20),len(x1)) # y coord
 map_ = np.vstack((x1,y))
-nlandmarks = 5
+nlandmarks = 10
 
 # draw map & get trajectory
 path = make_map(map_,nlandmarks)  
@@ -81,7 +84,8 @@ lmark_pos = make_map.landmarks
 
 
 # define commands
-u = [0,0]
+u = [[0,0]]
+
 counts = 100
    
 
@@ -146,12 +150,11 @@ vehicle_pos = []
 
 def animate(i,dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict):
     """ Run simulation """
-
     # move vehicle
-    sim_pos = move(sim_pos,dt/step,u,wheelbase=0.5)
+    sim_pos = move(sim_pos,dt/step,u[-1],wheelbase=0.5)
     
     # do process model prediction
-    ukf.predict(u=u,wheelbase=0.5)
+    ukf.predict(u=u[-1],wheelbase=0.5)
 
     # plot confidence ellipse after process model
     if i % ellipse_step == 0:
@@ -162,9 +165,7 @@ def animate(i,dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict
     # store current position    
     state = ukf.x
     
-    #if([state[0:2]] == goal):
-    #    print("goal")
-    #    return ukf
+
     z = []
     z.extend(distance_to(lmark_pos,state,sigmas[0],sigmas[1])) 
     
@@ -172,7 +173,8 @@ def animate(i,dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict
     track = point_to_follow(state,path_dict,sigmas[0],sigmas[1])
     
     # update heading
-    u = [1,track[1]]    
+    u.append([1,-track[1]])   
+    
 
     # update the estimated position
     ukf.update(z,landmarks=lmark_pos)
@@ -184,6 +186,9 @@ def animate(i,dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict
                     facecolor='g',alpha=0.8)
 
     vehicle_pos.append([ukf.x[0],ukf.x[1]])
+    time_text.set_text('Frame #: %.1f' % i)
+    following_text.set_text('Distance to next: {:.2f} Heading: {:.2f}'.format(track[0],track[1]))
+    position_text.set_text('Position - x: {:.2f} y: {:.2f}'.format(ukf.x[0],ukf.x[1]))
     #print(i)
 
     for t,line in enumerate(lines):
@@ -196,7 +201,7 @@ def animate(i,dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict
 
 
 fargs = [dt,u,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict]
-ani = FuncAnimation(fig,animate,frames=2000,interval=1,repeat=False,fargs= fargs)
+ani = FuncAnimation(fig,animate,frames=500,interval=1,repeat=False,fargs= fargs)
 plt.show()
 
 
