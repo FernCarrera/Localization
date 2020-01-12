@@ -1,4 +1,4 @@
-from tools import make_map,states_to_track
+from tools import make_map,states_to_track,plot_covariance_zorder
 from sensor import NoisySensor
 from vehicle import update_state
 import numpy as np
@@ -13,12 +13,15 @@ from ukf import *
 # ---- debugging
 import pdb
 
-fig = plt.figure()
+# Diagnostics for animations
+fig = plt.figure(figsize=(5,5))
 ax = fig.add_subplot(111)
 time_text = ax.text(0.02,0.95,'',transform=ax.transAxes)
 following_text = ax.text(0.02,0.85,'',transform=ax.transAxes)
 position_text = ax.text(0.02,0.75,'',transform=ax.transAxes)
 nextp_text = ax.text(0.02,0.65,'',transform=ax.transAxes)
+
+
 def plot_track(track):
     ''' draw the path that the vehicle took'''
     track = np.array(track)
@@ -87,16 +90,32 @@ lmark_pos = make_map.landmarks
 # define commands
 u = [[0,0]]
 
-counts = 100
-   
-
-
-        
+counts = 100       
 vehicle_pos = []    
 p2t = [5,4]
+vp2t = [start_x,start_y]
 track = [0,0]
 def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict):
     """ Run simulation """
+
+
+    """
+    # plot confidence ellipse after process model
+    if i % ellipse_step == 0:
+        plot_covariance_zorder(
+                (ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,
+                    facecolor='k', alpha=0.3,zorder=3)
+        plot_covariance_zorder(
+                (-10, 10), ukf.P[0:2, 0:2], std=6,
+                    facecolor='k', alpha=0.3,zorder=3)
+
+    # plot confidence ellipse after update
+    if i % ellipse_step == 0:
+                plot_covariance_zorder(
+                    (ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,
+                    facecolor='g',alpha=0.8,zorder=3)
+    """
+    
     
     # move vehicle
     sim_pos = move(sim_pos,dt/step,u[-1],wheelbase=0.5)
@@ -104,14 +123,8 @@ def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal
     # do process model prediction
     ukf.predict(u=u[-1],wheelbase=0.5)
 
-    # plot confidence ellipse after process model
-    if i % ellipse_step == 0:
-        plot_covariance(
-                (ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,
-                    facecolor='k', alpha=0.3)
-        plot_covariance(
-                (-10, 10), ukf.P[0:2, 0:2], std=6,
-                    facecolor='k', alpha=0.3)
+    # draw kalman location
+    plt.plot(ukf.x[0],ukf.x[1],label='vehicle',marker='o',c='blue',lw=0.5)
 
     # store current position    
     state = [round(ukf.x[0],3),round(ukf.x[1],3),round(ukf.x[2],3)    ]
@@ -132,7 +145,7 @@ def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal
         track.append(vtrack)
         p2t.append(vp2t)
         
-       
+    plt.scatter(p2t[-1][0],p2t[-1][1], marker='x',c='green',s=100,zorder=4)
      
     # update heading
     u.append([0.5,track[-1][1]])   
@@ -140,12 +153,11 @@ def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal
 
     # update the estimated position
     ukf.update(z,landmarks=lmark_pos)
-
-    # plot confidence ellipse after sensor reading and kalman gain
-    if i % ellipse_step == 0:
-                plot_covariance(
-                    (ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,
-                    facecolor='g',alpha=0.8)
+    
+    # draw kalman location
+    plt.plot(ukf.x[0],ukf.x[1],label='vehicle',marker='o',c='blue',lw=0.5)
+    #plot_covariance_zorder((ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,facecolor='y',alpha=0.5,zorder=3)
+    
 
     vehicle_pos.append([ukf.x[0],ukf.x[1]])
     time_text.set_text('Frame #: %.1f' % i)

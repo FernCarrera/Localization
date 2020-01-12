@@ -2,6 +2,8 @@ import numpy as np
 import random
 from scipy import interpolate
 import matplotlib.pyplot as plt
+from math import cos,sin
+from filterpy.stats import covariance_ellipse
 
 
 def make_map(points,radius=10,landmarks=0):
@@ -72,6 +74,12 @@ def make_landmarks(num_landmk,mapv):
         lmarks.append([x,y])
     return lmarks
 
+def draw_vehicle(state):
+    pass
+
+
+
+
 # Animation functions
 
 def states_to_track(nstates,plot_colors,state_names,markers=None,timer=None,fname='fig'):
@@ -130,5 +138,101 @@ def init(lines):
 
     #time_text.set_text('')
 
+
+def plot_covariance_zorder(
+        mean, cov=None, variance=1.0, std=None, interval=None,
+        ellipse=None, title=None, axis_equal=True,
+        show_semiaxis=False, show_center=True,
+        facecolor=None, edgecolor=None,
+        fc='none', ec='#004080',
+        alpha=1.0, xlim=None, ylim=None,
+        ls='solid',zorder=1):
+ 
+    from matplotlib.patches import Ellipse
+    import matplotlib.pyplot as plt
+
+    if cov is not None and ellipse is not None:
+        raise ValueError('You cannot specify both cov and ellipse')
+
+    if cov is None and ellipse is None:
+        raise ValueError('Specify one of cov or ellipse')
+
+    if facecolor is None:
+        facecolor = fc
+
+    if edgecolor is None:
+        edgecolor = ec
+
+    if cov is not None:
+        ellipse = covariance_ellipse(cov)
+
+    if axis_equal:
+        plt.axis('equal')
+
+    if title is not None:
+        plt.title(title)
+
+    ax = plt.gca()
+
+    angle = np.degrees(ellipse[0])
+    width = ellipse[1] * 2.
+    height = ellipse[2] * 2.
+
+    std = _std_tuple_of(variance, std, interval)
+    for sd in std:
+        e = Ellipse(xy=mean, width=sd*width, height=sd*height, angle=angle,
+                    facecolor=facecolor,
+                    edgecolor=edgecolor,
+                    alpha=alpha,
+                    lw=2, ls=ls,zorder=zorder)
+        ax.add_patch(e)
+    x, y = mean
+    if show_center:
+        plt.scatter(x, y, marker='+', color=edgecolor)
+
+    if xlim is not None:
+        ax.set_xlim(xlim)
+
+    if ylim is not None:
+        ax.set_ylim(ylim)
+
+    if show_semiaxis:
+        a = ellipse[0]
+        h, w = height/4, width/4
+        plt.plot([x, x+ h*cos(a+np.pi/2)], [y, y + h*sin(a+np.pi/2)])
+        plt.plot([x, x+ w*cos(a)], [y, y + w*sin(a)])
+
+
+def _std_tuple_of(var=None, std=None, interval=None):
+    """
+    by: @rlabbe
+
+    Convienence function for plotting. Given one of var, standard
+    deviation, or interval, return the std. Any of the three can be an
+    iterable list.
+    Examples
+    --------
+    >>>_std_tuple_of(var=[1, 3, 9])
+    (1, 2, 3)
+    """
+
+    if std is not None:
+        if np.isscalar(std):
+            std = (std,)
+        return std
+
+
+    if interval is not None:
+        if np.isscalar(interval):
+            interval = (interval,)
+
+        return norm.interval(interval)[1]
+
+    if var is None:
+        raise ValueError("no inputs were provided")
+
+    if np.isscalar(var):
+        var = (var,)
+    return np.sqrt(var)
 
 
