@@ -44,6 +44,7 @@ def move(x, dt, u, wheelbase):
         vel = u[0]
         steering_angle = u[1]
         dist = vel * dt
+        
 
         if abs(steering_angle) > 0.001: # is robot turning?
             beta = (dist / wheelbase) * np.tan(steering_angle)
@@ -51,10 +52,39 @@ def move(x, dt, u, wheelbase):
 
             sinh, sinhb = np.sin(hdg), np.sin(hdg + beta)
             cosh, coshb = np.cos(hdg), np.cos(hdg + beta)
-            return x + np.array([-r*sinh + r*sinhb, 
+
+            loc = x + np.array([-r*sinh + r*sinhb, 
                                 r*cosh - r*coshb, beta])
+            
+            return loc
         else: # moving in straight line
-            return x + np.array([dist*np.cos(hdg), dist*np.sin(hdg), 0])
+            loc = x + np.array([dist*np.cos(hdg), dist*np.sin(hdg), 0])
+            return loc
+
+def f_move(x, dt, u, wheelbase):
+        hdg = x[2]
+        vel = u[0]
+        steering_angle = u[1]
+        f_dist = vel*1
+
+        if abs(steering_angle) > 0.001: # is robot turning?
+           
+            # future prediction
+            f_beta = (f_dist / wheelbase) * np.tan(steering_angle)
+            f_r = wheelbase / np.tan(steering_angle)
+
+         
+            f_sinh, f_sinhb = np.sin(hdg), np.sin(hdg + f_beta)
+            f_cosh, f_coshb = np.cos(hdg), np.cos(hdg + f_beta)
+
+            
+            f_pred = x + np.array([-f_r*f_sinh + f_r*f_sinhb, 
+                                f_r*f_cosh - f_r*f_coshb, f_beta])
+            return f_pred
+        else: # moving in straight line
+
+            f_pred = x + np.array([f_dist*np.cos(hdg), f_dist*np.sin(hdg), 0])
+            return f_pred
         
 
 def turn(v, t0, t1, steps,v2=0):
@@ -154,3 +184,17 @@ def distance_to(landmarks,position,sigma_range,sigma_bearing):
       
     
     return ret
+
+def dist(point,position,sigma_range,sigma_bearing):
+     
+    # vehicle position
+    x,y,head = position[0],position[1],position[2]
+
+    dx, dy = point[0] - x, point[1] - y
+    d = np.sqrt(dx**2 + dy**2) + np.random.randn()*sigma_range
+    bearing = atan2(point[1] - y, point[0] - x)
+    a = (normalize_angle(bearing - head + np.random.randn()*sigma_bearing))
+    ret = [d,a]
+
+    return ret
+    

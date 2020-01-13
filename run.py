@@ -32,7 +32,8 @@ def plot_track(track):
 
 # Create a random points to interpolate into a path
 x1 = np.arange(0,10,1)   # x coord
-y = random.sample(range(0,20),len(x1)) # y coord
+#y = random.sample(range(0,20),len(x1)) # y coord
+y = [0,1,1,2,2,3,3,4,5,6]
 map_ = np.vstack((x1,y))
 nlandmarks = 10
 
@@ -118,13 +119,25 @@ def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal
     
     
     # move vehicle
-    sim_pos = move(sim_pos,dt/step,u[-1],wheelbase=0.5)
+    sim_pos= move(sim_pos,dt/step,u[-1],wheelbase=0.5)
+    
+    # where the vehicle will be one second in the future
+    pred = f_move([ukf.x[0],ukf.x[1],ukf.x[2]],dt/step,u[-1],wheelbase=0.5)
+   
+    dist_to_pred = dist(pred,ukf.x,sigma_range,sigma_bearing)
+    
+    # 5 is path radius. TODO add path variable
+    if (dist_to_pred[0] > 5):
+        print('leaving path')
+        turn = turn(1,ukf.x[2],ukf.x[2]-1,10)
+        print(turn)
     
     # do process model prediction
     ukf.predict(u=u[-1],wheelbase=0.5)
 
     # draw kalman location
-    plt.plot(ukf.x[0],ukf.x[1],label='vehicle',marker='o',c='blue',lw=0.5)
+    plt.plot(ukf.x[0],ukf.x[1],label='vehicle',marker='o',c='blue',lw=0.2)
+    plt.scatter(pred[0],pred[1],marker='.',c='red')
 
     # store current position    
     state = [round(ukf.x[0],3),round(ukf.x[1],3),round(ukf.x[2],3)    ]
@@ -157,7 +170,7 @@ def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal
     # draw kalman location
     plt.plot(ukf.x[0],ukf.x[1],label='vehicle',marker='o',c='blue',lw=0.5)
     #plot_covariance_zorder((ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,facecolor='y',alpha=0.5,zorder=3)
-    
+    plt.scatter(pred[0],pred[1],marker='.',c='red')
 
     vehicle_pos.append([ukf.x[0],ukf.x[1]])
     time_text.set_text('Frame #: %.1f' % i)
