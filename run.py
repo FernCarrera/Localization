@@ -37,6 +37,11 @@ y = [0,1,1,2,2,3,3,4,5,6]
 map_ = np.vstack((x1,y))
 nlandmarks = 10
 
+# sorted map for finding closets points
+point_path = map(lambda x,y: [x,y],x1,y)
+sorted_path = sorted(zpath,key=lambda pt1: dist_formula(start,pt1) )
+
+
 # draw map & get trajectory
 path = make_map(map_,landmarks=nlandmarks)  
 

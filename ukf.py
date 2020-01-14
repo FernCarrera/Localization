@@ -9,7 +9,7 @@ def point_to_follow(state,path,sigma_range,sigma_bearing):
     """Uses current location to find the next point in path
     
     Arguments:
-        state {[float]} -- [x-position]
+        state {[float,float,float]} -- [vehicle state]
         path {[dictionary]} -- [stored path]
     
     Returns:
@@ -197,4 +197,60 @@ def dist(point,position,sigma_range,sigma_bearing):
     ret = [d,a]
 
     return ret
+
+
+def dist_formula(pos,pt1): 
+
+    return np.sqrt( (pt1[0]-pos[0])**2 + (pt1[1]-pos[1])**2 )
+
+from tools import make_map
+import random
+import copy
+
+
+"""
+sorted list by distance example:
+x1 = [0,1,2,3,4,0,1,2,3,4] 
+y1 = [0,1,2,3,4,3,3,3,3,3]
+
+zpath = map(lambda x,y: [x,y],x1,y1)
+nlist = sorted(zpath,key=lambda pt1: dist_formula(start,pt1) )
+
+"""
+
+def closest_point(pos,path,bumper):
+    # TODO if multiple points with same distance, pick rightmost??
+    """Returns the closest point on that path relative
+       to current location
+    
+    Arguments:
+        pos {[x,y,heading]} -- [vehicle position]
+        path {dictionary} -- [path]
+        bumper {[int/float]} -- [how many points around x-location 
+                                    do you want to search]
+    
+    Returns:
+        [[x,y]] -- [closest point]
+    """
+    r_pos = pos[0] + bumper
+    l_pos = pos[0] - bumper
+
+    current = 10000
+    for x in range(l_pos,r_pos): # values xlocation +- bumper
+        
+        if x in path:   # if x-pos is in path dictionary
+            y =  path[x]
+        else:
+            # if its not, pick the closest point to x
+            y = path[min(path.keys(),key=lambda k: abs(k-x))]
+
+        # find closest point to pos
+        point = [x,y]
+        dist = dist_formula(point,pos)
+        if dist < current:
+            closest_point = point
+    
+    return closest_point
+    
+
     
