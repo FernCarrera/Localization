@@ -38,8 +38,8 @@ map_ = np.vstack((x1,y))
 nlandmarks = 10
 
 # sorted map for finding closets points
-point_path = map(lambda x,y: [x,y],x1,y)
-sorted_path = sorted(zpath,key=lambda pt1: dist_formula(start,pt1) )
+#point_path = map(lambda x,y: [x,y],x1,y)
+#sorted_path = sorted(zpath,key=lambda pt1: dist_formula(start,pt1) )
 
 
 # draw map & get trajectory
@@ -54,7 +54,9 @@ dt = 0.1
 u = [0,0]
 sim_pos = [0,0,0]
 ellipse_step = 20
-sigma_range = 0.3; sigma_bearing = 0.1
+#sigma_range = 0.3; sigma_bearing = 0.1
+# 'perfect' sensor to test controls
+sigma_range = 0.0001; sigma_bearing = 0.0001
 sigmas = [sigma_range,sigma_bearing]
 step = 10
 
@@ -98,10 +100,10 @@ u = [[0,0]]
 
 counts = 100       
 vehicle_pos = []    
-p2t = [5,4]
+last = 0
 vp2t = [start_x,start_y]
 track = [0,0]
-def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict):
+def animate(i,dt,u,last,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict):
     """ Run simulation """
 
 
@@ -124,50 +126,59 @@ def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal
     
     
     # move vehicle
-    sim_pos= move(sim_pos,dt/step,u[-1],wheelbase=0.5)
+    if ([sim_pos[0],sim_pos[1]]==[start_x,start_y]):
+        pred = [start_x,start_y]
+
+    #print(u)
+    for cmd_num,cmd in enumerate(u):
+        print(cmd)
+        print("Running command #: {}".format(cmd_num))
+        sim_pos= move(sim_pos,dt/step,cmd,wheelbase=0.5)
+        #print(sim_pos)
+        pred = f_move(sim_pos,dt/step,cmd,wheelbase=0.5)
     
+        
+        
+
     # where the vehicle will be one second in the future
-    pred = f_move([ukf.x[0],ukf.x[1],ukf.x[2]],dt/step,u[-1],wheelbase=0.5)
+    #pred = f_move([ukf.x[0],ukf.x[1],ukf.x[2]],dt/step,u[-1],wheelbase=0.5)
+    
    
-    dist_to_pred = dist(pred,ukf.x,sigma_range,sigma_bearing)
-    
+    dist_to_pred = dist(pred,sim_pos,sigma_range,sigma_bearing)
+    future_loc = sim_pos[0] + dist_to_pred[0]
+
+    #print('future_loc',future_loc)
     # 5 is path radius. TODO add path variable
-    if (dist_to_pred[0] > 5):
+    if (future_loc - dist_to_pred[0] > 0.4):
         print('leaving path')
-        turn = turn(1,ukf.x[2],ukf.x[2]-1,10)
-        print(turn)
-    
+        closest_p = closest_point(sim_pos,path_dict,5)
+        _,new_head = dist(point=closest_p,position=ukf.x,
+                    sigma_range=sigma_range,sigma_bearing=sigma_bearing)
+       # print("Curre_head:{},new_head:{}".format(sim_pos[2],new_head))
+        t = turn(2,sim_pos[2],new_head,steps=5)
+        
+        u.extend(t)
+        
+        #print("new command length:{}".format(len(u)))
+        #print(turn)
+    else:
+        print('Straight')
+        u.extend([[1,sim_pos[2]]]*5)
+        #print(len(u))
+    #print(u)
     # do process model prediction
     ukf.predict(u=u[-1],wheelbase=0.5)
 
     # draw kalman location
-    plt.plot(ukf.x[0],ukf.x[1],label='vehicle',marker='o',c='blue',lw=0.2)
+    plt.plot(sim_pos[0],sim_pos[1],label='vehicle',marker='o',c='blue',lw=0.2)
     plt.scatter(pred[0],pred[1],marker='.',c='red')
 
     # store current position    
-    state = [round(ukf.x[0],3),round(ukf.x[1],3),round(ukf.x[2],3)    ]
-    
+    state = [round(sim_pos[0],3),round(sim_pos[1],3),round(sim_pos[2],3)    ]
+   
 
     z = []
     z.extend(distance_to(lmark_pos,state,sigmas[0],sigmas[1])) 
-    
-    # distance and heading of next point to track
-    if ([state[0],state[1]] == [start_x,start_y]):
-        print('init')
-        vtrack,vp2t = point_to_follow(state,path_dict,sigmas[0],sigmas[1])
-        track.append(vtrack)
-        p2t.append(vp2t)
-    if ([state[0],state[1]] == p2t[-1]):
-        print('yes')
-        vtrack,vp2t = point_to_follow(state,path_dict,sigmas[0],sigmas[1])
-        track.append(vtrack)
-        p2t.append(vp2t)
-        
-    plt.scatter(p2t[-1][0],p2t[-1][1], marker='x',c='green',s=100,zorder=4)
-     
-    # update heading
-    u.append([0.5,track[-1][1]])   
-    
 
     # update the estimated position
     ukf.update(z,landmarks=lmark_pos)
@@ -177,15 +188,16 @@ def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal
     #plot_covariance_zorder((ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,facecolor='y',alpha=0.5,zorder=3)
     plt.scatter(pred[0],pred[1],marker='.',c='red')
 
-    vehicle_pos.append([ukf.x[0],ukf.x[1]])
+    vehicle_pos.append([sim_pos[0],sim_pos[1]])
     time_text.set_text('Frame #: %.1f' % i)
-    following_text.set_text('Distance to next: {:.2f} Heading: {:.2f}'.format(track[-1][0],track[-1][1]))
+    #following_text.set_text('Distance to next: {:.2f} Heading: {:.2f}'.format(new_dist,new_head))
     position_text.set_text('Current Position - x: {:.2f} y: {:.2f}'.format(ukf.x[0],ukf.x[1]))
-    nextp_text.set_text('Next point - x: {:.2f} y: {:.2f}'.format(p2t[-1][0],p2t[-1][1]))
+    #nextp_text.set_text('Next point - x: {:.2f} y: {:.2f}'.format(p2t[-1][0],p2t[-1][1]))
     
 
     for t,line in enumerate(lines):
         line.set_data(vehicle_pos[t][0],vehicle_pos[t][1])
+        #line.set_data(u)
         return lines
 
 
@@ -193,6 +205,6 @@ def animate(i,dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal
 
 
 # run sim
-fargs = [dt,u,p2t,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict]
+fargs = [dt,u,last,track,sim_pos,step,ellipse_step,ukf,sigmas,lmark_pos,goal,path_dict]
 ani = FuncAnimation(fig,animate,frames=700,interval=1,repeat=False,fargs= fargs)
 plt.show()

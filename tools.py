@@ -31,8 +31,8 @@ def make_map(points,radius=10,landmarks=0):
 
     unew = np.arange(0,1.01,0.01) # make 101 points for spline to use?
     out = interpolate.splev(unew,tck)
-    plt.plot(out[0],out[1],color='orange',lw=radius,zorder=1)
-    plt.plot(out[0],out[1],color='red',label="track",zorder=1)
+    #plt.plot(out[0],out[1],color='orange',lw=radius,zorder=1)
+    #plt.plot(out[0],out[1],color='red',label="track",zorder=1)
     #plt.plot(points[:][0],points[:][1],'o',color='blue',label='points')
 
     
@@ -42,17 +42,17 @@ def make_map(points,radius=10,landmarks=0):
     # plot landmarks if theres any
     if len(lmarks) > 0:
         lmarks = np.array(lmarks)
-        plt.scatter(lmarks[:,0],lmarks[:,1],marker='P',label='landmarks',zorder=2)
+        #plt.scatter(lmarks[:,0],lmarks[:,1],marker='P',label='landmarks',zorder=2)
     
     # make variable for storing landmark locations
     make_map.landmarks = lmarks
     
     # draw start/finish line
-    plt.scatter(out[0][-1],out[1][-1],marker='x',c='red',zorder=2,s=100)
-    plt.scatter(out[0][0],out[1][0],marker='2',c='green',zorder=2,s=100)
+    #plt.scatter(out[0][-1],out[1][-1],marker='x',c='red',zorder=2,s=100)
+    #plt.scatter(out[0][0],out[1][0],marker='2',c='green',zorder=2,s=100)
     #plt.plot(lmarks[0],lmarks[1],'P')
     
-    plt.legend()
+    #plt.legend()
     #plt.show()
     return out
 

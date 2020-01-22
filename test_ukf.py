@@ -25,7 +25,6 @@ class TestUkf(unittest.TestCase):
         # return point in line
         self.assertIn(c_point, path_list)  
         # check for points outside the path
-
         # check for bumper making to check outside line
 
 

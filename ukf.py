@@ -43,6 +43,7 @@ def move(x, dt, u, wheelbase):
         hdg = x[2]
         vel = u[0]
         steering_angle = u[1]
+        #print(vel)
         dist = vel * dt
         
 
@@ -232,8 +233,8 @@ def closest_point(pos,path,bumper):
     Returns:
         [[x,y]] -- [closest point]
     """
-    r_pos = pos[0] + bumper
-    l_pos = pos[0] - bumper
+    r_pos = int(pos[0]) + bumper
+    l_pos = int(pos[0]) - bumper
 
     current = 10000
     for x in range(l_pos,r_pos): # values xlocation +- bumper
