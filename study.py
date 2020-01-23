@@ -7,9 +7,9 @@ from math import atan2
 
 # default control gains
 k = 0.5 # control gain
-Kp = 1.0 # proportional gain 
+Kp = 0.70 # proportional gain 
 dt = 0.1    # [s] time rate of change
-L = 2.9     # [m] wheel base of vehicle
+L = 1     # [m] wheel base of vehicle (distance between front and rear axle)
 max_steer = np.radians(30.0)    # [rad] max steering agle
 
 show_animation = True
@@ -132,18 +132,33 @@ def normalize_angle(angle):
     return angle
 
 def calc_target_index(state,cx,cy):
+    """Calculate the next point in path to follow
+    
+    Arguments:
+        state {[State object]} -- [State of the vehicle]
+        cx {[list]} -- [x-corods of path]
+        cy {[list]} -- y-coords of path
+    
+    Returns:
+        int,float -- [index to next target, error axle->target]
+    """
 
     # calc front axle position
     fx = state.x + L * np.cos(state.yaw)
     fy = state.y + L * np.sin(state.yaw)
 
-    # search for nearest point index
+    # Make triangles between your position and the path 
+    # shortest hypothenuse is point to travel to
     dx = [fx - icx for icx in cx]
     dy = [fy - icy for icy in cy]
     d = np.hypot(dx,dy)
     target_idx = np.argmin(d)
 
-    # project RMS error onto front axle vector
+    # Calculate error between front axle vector and
+    # the target point using dot product
+    # neg: pointing in opposite dir
+    # 0: vectors are perpendicuar
+    # pos: pointing in similar dir 
     front_axle_vec = [-np.cos(state.yaw + np.pi / 2),
                         -np.sin(state.yaw + np.pi / 2)]
     error_front_axle = np.dot([dx[target_idx],dy[target_idx]],front_axle_vec)

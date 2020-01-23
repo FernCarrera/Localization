@@ -18,8 +18,8 @@ def plot_track(track):
 def main():
 
     # Create a random points to interpolate into a path
-    x = np.arange(0,10,1)   # x coord
-    y = [0,1,1,2,2,3,3,4,4,4]
+    x = np.arange(0,20,1)   # x coord
+    y = [0,1,1,1,1,3,3,3,3,5,5,5,5,5,7,7,7,5,5,5]
     map_ = np.vstack((x,y))
     nlandmarks = 10
 
@@ -32,8 +32,8 @@ def main():
     y_path = [round(y,4) for y in path[1][:]]
     
     
-    state = State(x=0.0,y=0.0,yaw=np.radians(20.0),v=0.0)
-    target_speed = 30.0/3.6     # [m/s]
+    state = State(x=x_path[0],y=y_path[0],yaw=np.radians(20.0),v=0.0)
+    target_speed = 20.0/3.6     # [m/s]
 
     # Lists to store
     x = [state.x]
@@ -50,11 +50,10 @@ def main():
     time = 0.0
     show_animation = True
 
-    print(last_index,target_index)
-  
+    
     while time <= max_sim_time and last_index > target_index:
         ai = pid(target_speed,state.v)
-        di,target_index = stanley_2(state,x_path,y_path,target_index)
+        di,target_index = stanley(state,x_path,y_path,target_index)
         state.update(ai,di)
         #print(last_index,target_index)
         time += dt
@@ -70,9 +69,11 @@ def main():
             # stop simulation with esc key
             plt.gcf().canvas.mpl_connect('key_release_event',
                 lambda event: [exit(0) if event.key == 'escape' else None])
-            plt.plot(path[0][:],path[1][:], ".r", label = 'course')
+            plt.plot(path[0][:],path[1][:], color="orange", label = 'course')
+            plt.plot(path[0][-1],path[1][-1],marker = 'x', color='red')
             plt.plot(x,y,'-b',label='trajectory')
-            
+            plt.title("Simulation")
+            plt.legend()
             plt.axis("equal")
             plt.grid(True)
             plt.pause(0.001)
