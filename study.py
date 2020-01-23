@@ -5,11 +5,11 @@ from math import atan2
 
 
 # default control gains
-k = 0.3 # control gain
-Kp = 0.3 # proportional gain 
+k = 0.5 # control gain
+Kp = 0.5 # proportional gain 
 dt = 0.1    # [s] time rate of change
-L = 1     # [m] wheel base of vehicle (distance between front and rear axle)
-max_steer = np.radians(30.0)    # [rad] max steering agle
+L = 1.9     # [m] wheel base of vehicle (distance between front and rear axle)
+max_steer = np.radians(40.0)    # [rad] max steering agle
 
 show_animation = True
 
@@ -46,7 +46,54 @@ class State(object):
         self.yaw = normalize_angle(self.yaw)
         self.v += acceleration * dt
 
-def pid(target,current):
+
+class PID(object):
+
+    def __init__(self,Kp,Ki,Kd):
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
+
+        self.prev_lat_error = 0.1
+        self.prev_state = 0.0
+        self.prev_error = 0.0
+        self.prev_time = 0.01
+
+
+    def pid_control(self,target,current,lat_error,time):
+        """Proportional Derivative Speed controller
+        
+        Arguments:
+            target {[float]} -- [target speed]
+            current {[float]} -- [current speed]
+            lat_error {[float]} -- [lateral error]
+            time {[float]} -- [time in seconds]
+        
+        Returns:
+            [float] -- [acceleration correction]
+        """ 
+
+        if abs(lat_error) > self.prev_lat_error:
+            target = 0.1*target
+        
+        self.prev_lat_error = abs(lat_error)
+
+
+        time_elap = time - self.prev_time
+        error = target - current
+        error_rate = (error - self.prev_error)
+
+        self.prev_error = error
+        self.prev_time = time
+
+        d_gain = self.Kd * error_rate/time_elap
+        i_gain = self.Ki * (self.prev_state - (error * time_elap))
+        p_gain = self.Kp * (target - current)
+
+        return d_gain + p_gain + i_gain
+
+
+def pid(target,current,lat_error):
     """Proportional speed controller
     
     Arguments:
@@ -56,6 +103,11 @@ def pid(target,current):
     Returns:
         [float] -- [acceleration needed to correct]
     """
+    
+    if abs(lat_error) >= 0.5:
+        target = 0.4*target
+        #prev_error = lat_error
+    
 
     return Kp * (target - current)
 

@@ -41,9 +41,11 @@ def main():
     x_path = [round(x,4) for x in path[0][:]]
     y_path = [round(y,4) for y in path[1][:]]
     
-    
+    # state object
     state = State(x=x_path[0],y=y_path[0],yaw=np.radians(90.0),v=0.0)
-    target_speed = 20.0/3.6     # km/h - > [m/s]
+    pd = PID(0.5,0.1,-0.15)
+    
+    target_speed = 30.0/3.6     # km/h - > [m/s]
 
     # Lists to store
     x = [state.x]
@@ -56,14 +58,15 @@ def main():
     # calc start tracking value
     target_index,_ = calc_target_index(state,x_path,y_path)
     last_index = len(x_path) - 1
-    max_sim_time = 40.0
+    max_sim_time = 50.0
     dt = 0.1
     time = 0.0
     show_animation = True
 
     
     while time <= max_sim_time and last_index > target_index:
-        ai = pid(target_speed,state.v)
+        #ai = pid(target_speed,state.v,lat_error[-1])
+        ai = pd.pid_control(target_speed,state.v,lat_error[-1],time)
         di,target_index = stanley(state,x_path,y_path,target_index)
         state.update(ai,di)
         #print(last_index,target_index)
@@ -75,6 +78,10 @@ def main():
         v.append(state.v)
         t.append(time)
         lat_error.append(stanley.lat_error)
+
+        # speed up time if oscilaltions
+        if stanley.lat_error > abs(1.5):
+            time += 1
 
         if show_animation:
             plt.cla()   # clear current axes
