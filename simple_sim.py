@@ -105,8 +105,8 @@ def main():
     assert last_index >= target_index, "Cannot reach goal"
 
     if show_animation:
-        plt.plot(path[0][:],path[1][:], ".r", label = 'course')
-        plt.plot(x,y,'-b',label='trajectory')
+        #plt.plot(path[0][:],path[1][:], ".r", label = 'course')
+        #plt.plot(x,y,'-b',label='trajectory')
         plt.legend()
         plt.xlabel("x[m]")
         plt.ylabel("y[m]")
