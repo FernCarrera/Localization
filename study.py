@@ -3,11 +3,10 @@ import matplotlib.pyplot as plt
 import sys
 from math import atan2
 
-# add path designer
 
 # default control gains
-k = 0.5 # control gain
-Kp = 0.70 # proportional gain 
+k = 0.3 # control gain
+Kp = 0.3 # proportional gain 
 dt = 0.1    # [s] time rate of change
 L = 1     # [m] wheel base of vehicle (distance between front and rear axle)
 max_steer = np.radians(30.0)    # [rad] max steering agle
@@ -48,6 +47,15 @@ class State(object):
         self.v += acceleration * dt
 
 def pid(target,current):
+    """Proportional speed controller
+    
+    Arguments:
+        target {[float]} -- [target speed]
+        current {[float]} -- [current speed]
+    
+    Returns:
+        [float] -- [acceleration needed to correct]
+    """
 
     return Kp * (target - current)
 
@@ -69,6 +77,8 @@ def stanley(state,cx,cy,last_target_idx):
 
     trgt_idx, error_front_axle = calc_target_index(
                     state,cx,cy)
+    
+    stanley.lat_error = error_front_axle
     
     if last_target_idx >= trgt_idx:
         trgt_idx = last_target_idx
