@@ -51,38 +51,10 @@ def pid(target,current):
 
     return Kp * (target - current)
 
-def stanley_control(state,cx,cy,cyaw,last_target_idx):
-    """Implementation of stanley control
-    
-    Arguments:
-        state {[State object]} -- [state of object]
-        cx {[float]} -- [description]
-        cy {[float]} -- [description]
-        cyaw {[float]} -- [description]
-        last_target_idx {[type]} -- [description]
-    
-    Returns:
-        [type] -- [description]
-    """
-
-    current_target_idx, error_front_axle = calc_target_index(
-                    state,cx,cy)
-    
-    if last_target_idx >= current_target_idx:
-        current_target_idx = last_target_idx
-
-    # used to correct heading error
-    theta_e = normalize_angle(cyaw[current_target_idx] - state.yaw)
-    # used to correct cross track error
-    theta_d = np.arctan2(k * error_front_axle,state.v)
-    # steering control
-    delta = theta_e + theta_d
-
-    return delta, current_target_idx
 
 
-def stanley_2(state,cx,cy,last_target_idx):
-    """Implementation of stanley control
+def stanley(state,cx,cy,last_target_idx):
+    """Implementation of Kinematic Stanley control
     
     Arguments:
         state {[State object]} -- [state of object]
