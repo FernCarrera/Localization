@@ -7,3 +7,7 @@ Currently testing a kinematic Stanley controller, can view
 progress in simple_sim.py
 
 The green ellipses are the covariance ellipses for the position of the vehicle.
+
+![Sim_Example](/img/SS_sim_preview.png)
+
+![Metrics_Example](/img/SS_speed_lateral.png)
