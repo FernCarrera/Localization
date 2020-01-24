@@ -19,12 +19,15 @@ def main():
     y.extend( [x%5 for x in x[55:60]])
     y[-5:] = [-1,-1,-1,-1,-2]
     
+
+
     # prepare map for func
     map_ = np.vstack((x,y))
     
-    # draw map & get trajectory
-    path = make_map(map_)
-    
+    # draw map,landmarks & get trajectory
+    path = make_map(map_,landmarks=5,random_seed=42)
+    lmark_pos = np.array(make_map.landmarks)
+   
     # round path for controller  
     x_path = [round(x,4) for x in path[0][:]]
     y_path = [round(y,4) for y in path[1][:]]
@@ -79,6 +82,7 @@ def main():
             plt.plot(path[0][:],path[1][:], color="orange", label = 'course')
             plt.plot(path[0][-1],path[1][-1],marker = 'x', color='red')
             plt.plot(x,y,'-b',label='trajectory')
+            plt.scatter(lmark_pos[:,0],lmark_pos[:,1],marker='P',label='landmarks')
             plt.text(-40,80,"Time Elapsed:{}".format(round(time,3)))
             plt.text(-40,75,"Time Allotted:{}".format(round(max_sim_time,3)),color='r')
 

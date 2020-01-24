@@ -74,7 +74,7 @@ class PID(object):
         """ 
 
         if abs(lat_error) > self.prev_lat_error:
-            target = 0.1*target
+            target = 0.5*target # pump the breaks
         
         self.prev_lat_error = abs(lat_error)
 

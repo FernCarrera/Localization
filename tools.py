@@ -6,7 +6,7 @@ from math import cos,sin
 from filterpy.stats import covariance_ellipse
 
 
-def make_map(points,radius=10,landmarks=0):
+def make_map(points,radius=10,landmarks=0,plot_landmarks=True,random_seed=None):
     """[Draws the path]
     
     Arguments:
@@ -26,6 +26,8 @@ def make_map(points,radius=10,landmarks=0):
         make_map(points,5)
         plt.show()
     """
+    if random_seed is not None and type(random_seed) is int:
+        random.seed(random_seed)
 
     tck,_ = interpolate.splprep(points,s=0) # s=0,gp thru all pts
 
@@ -38,11 +40,13 @@ def make_map(points,radius=10,landmarks=0):
     
     # make landmarks
     lmarks = make_landmarks(landmarks,out)
+    make_map.landmarks = lmarks
 
     # plot landmarks if theres any
-    if len(lmarks) > 0:
+    
+    if len(lmarks) > 0 and plot_landmarks:
         lmarks = np.array(lmarks)
-        #plt.scatter(lmarks[:,0],lmarks[:,1],marker='P',label='landmarks',zorder=2)
+        plt.scatter(lmarks[:,0],lmarks[:,1],marker='P',label='landmarks',zorder=2)
     
     # make variable for storing landmark locations
     make_map.landmarks = lmarks
