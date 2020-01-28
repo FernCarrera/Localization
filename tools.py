@@ -78,8 +78,39 @@ def make_landmarks(num_landmk,mapv):
         lmarks.append([x,y])
     return lmarks
 
-def draw_vehicle(state):
-    pass
+
+def simple_animation(Particle, path,pos,lmark_pos,time,max_sim_time,pause=0.001,plot_particles=True):
+    particles = Particle[0]
+    mu = Particle[1]
+    
+    plt.cla()   # clear current axes
+
+    # stop simulation with esc key
+    plt.gcf().canvas.mpl_connect('key_release_event',
+        lambda event: [exit(0) if event.key == 'escape' else None])
+    
+    plt.plot(path[0][:],path[1][:], color="orange", label = 'course')
+    plt.plot(path[0][-1],path[1][-1],marker = 'x', color='red')
+    plt.plot(pos[0],pos[1],'-b',label='trajectory')
+    plt.scatter(lmark_pos[:,0],lmark_pos[:,1],marker='P',label='landmarks')
+    plt.text(-40,80,"Time Elapsed:{}".format(round(time,3)))
+    plt.text(-40,75,"Time Allotted:{}".format(round(max_sim_time,3)),color='r')
+
+    if plot_particles:
+        plt.scatter(particles[:, 0], particles[:, 1], 
+                    color='k', marker=',', s=1)
+        #p1 = plt.scatter(position[0], position[1], marker='+',
+        #        color='k', s=180, lw=3)
+        plt.scatter(mu[0], mu[1], marker='s', color='r')
+
+
+    plt.title("Simulation")
+    plt.xlabel("x[m]")
+    plt.ylabel("y[m]")
+    plt.legend()
+    plt.axis("equal")
+    plt.grid(True)
+    plt.pause(pause)
 
 
 

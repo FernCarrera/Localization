@@ -1,7 +1,11 @@
-from tools import make_map,states_to_track,plot_covariance_zorder
+from tools import make_map,simple_animation
 import numpy as np
 import matplotlib.pyplot as plt
 from study import State,PID,stanley,calc_target_index
+from particle import gaussian_particles,predict,update,neff,estimate,resample_from_index
+from ukf import distance_to
+# -------------- Filter.py ----------------
+from filterpy.monte_carlo import stratified_resample
 
 
 
@@ -34,7 +38,7 @@ def main():
     
     # state and PID object
     state = State(x=x_path[0],y=y_path[0],yaw=np.radians(90.0),v=0.0)
-    pd = PID(0.5,0.1,-0.15)
+    pd = PID(Kp=0.5,Ki=0.1,Kd=-0.15)
     
     target_speed = 30.0/3.6     # km/h - > [m/s]
 
@@ -54,45 +58,63 @@ def main():
     time = 0.0
     show_animation = True
 
-    
+
+    # setup particle filter
+    N = 1000
+    particles = gaussian_particles([0,0,0],[0.1,0.1,0.1],N)
+    weights = np.ones(N) / N    # equal weight to all particles
+    position = np.array([state.x,state.y,state.yaw])
+
+   
+
+
+
+    xs = []
+    NL = 5
     while time <= max_sim_time and last_index > target_index:
-        #ai = pid(target_speed,state.v,lat_error[-1])
+        
+        # distance & heading to landmark
+        #zs = distance_to(lmark_pos,position,0.1,0.1)
+        zs = (np.linalg.norm(lmark_pos - [position[0],position[1]]      ,axis=1) + (np.random.randn(NL) * 0.1))
+        
+        # set up controls
         ai = pd.pid_control(target_speed,state.v,lat_error[-1],time)
         di,target_index = stanley(state,x_path,y_path,target_index)
         state.update(ai,di)
-        #print(last_index,target_index)
+
+        # predict where particles goin
+        predict(particles,(0,0.5),std=(0.1,0.1))
+        # combine with measurements
+        weights = update(particles,weights,z=zs,R=0.1,landmarks=lmark_pos)
+
+        # check Effective N
+        if neff(weights) < N/2:
+            indexes = stratified_resample(weights)
+            particles,weights = resample_from_index(particles, weights, indexes)
+            assert np.allclose(weights, 1/N)
+        mu, var = estimate(particles, weights)
+        xs.append(mu)
+
+        
         time += dt
         
+        # store data for plotting
         x.append(state.x)
         y.append(state.y)
         yaw.append(state.yaw)
         v.append(state.v)
         t.append(time)
         lat_error.append(stanley.lat_error)
+        position = np.array([state.x,state.y,state.yaw])
 
         # speed up time if oscilaltions
         if stanley.lat_error > abs(1.5):
             time += 1
 
         if show_animation:
-            plt.cla()   # clear current axes
-            # stop simulation with esc key
-            plt.gcf().canvas.mpl_connect('key_release_event',
-                lambda event: [exit(0) if event.key == 'escape' else None])
-            plt.plot(path[0][:],path[1][:], color="orange", label = 'course')
-            plt.plot(path[0][-1],path[1][-1],marker = 'x', color='red')
-            plt.plot(x,y,'-b',label='trajectory')
-            plt.scatter(lmark_pos[:,0],lmark_pos[:,1],marker='P',label='landmarks')
-            plt.text(-40,80,"Time Elapsed:{}".format(round(time,3)))
-            plt.text(-40,75,"Time Allotted:{}".format(round(max_sim_time,3)),color='r')
-
-            plt.title("Simulation")
-            plt.xlabel("x[m]")
-            plt.ylabel("y[m]")
-            plt.legend()
-            plt.axis("equal")
-            plt.grid(True)
-            plt.pause(0.001)
+            Particle = [particles,mu]
+            simple_animation(Particle,path,[x,y],lmark_pos,time,max_sim_time)
+           
 
     assert last_index >= target_index, "Cannot reach goal"
 
