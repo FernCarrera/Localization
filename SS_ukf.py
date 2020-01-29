@@ -2,10 +2,9 @@ from tools import make_map,simple_animation
 import numpy as np
 import matplotlib.pyplot as plt
 from study import State,PID,stanley,calc_target_index
-from particle import gaussian_particles,predict_2,update,neff,estimate,resample_from_index
-from ukf import distance_to
+from ukf import distance_to,residual_x
 # -------------- Filter.py ----------------
-from filterpy.monte_carlo import stratified_resample
+from filterpy.kalman import MerweScaledSigmaPoints,UKF
 
 
 
@@ -58,43 +57,24 @@ def main():
     time = 0.0
     show_animation = True
 
+    # setup UKF
+    points = MerweScaledSigmaPoints(n=3,alpha=1e-4,kappa=0.0,beta=2,subtract=residual_x)
 
-    # setup particle filter
-    N = 200
-    particles = gaussian_particles([0,0,0],[1,1,1],N)
-    weights = np.ones(N) / N    # equal weight to all particles
-    position = np.array([state.x,state.y,state.yaw])
-
-   
-
+    ukf = UKF(dim_x=3, dim_z=2*len(lmark_pos), fx=move, hx=Hx,
+              dt=dt, points=points, x_mean_fn=state_mean, 
+              z_mean_fn=z_mean, residual_x=residual_x, 
+              residual_z=residual_h)
 
 
-    xs = []
-    NL = 5
+
+
     while time <= max_sim_time and last_index > target_index:
-        
-        # distance & heading to landmark
-        #zs1 = distance_to(lmark_pos,position,0.1,0.1)
-        zs = (np.linalg.norm(lmark_pos - [position[0],position[1]],axis=1) + (np.random.randn(NL) * 0.1))
-        #print("Zs:{}".format(zs[:5]))
         # set up controls
         ai = pd.pid_control(target_speed,state.v,lat_error[-1],time)
         di,target_index = stanley(state,x_path,y_path,target_index)
         state.update(ai,di)
 
-        # predict where particles goin
-        particles = predict_2(particles,(ai,di),state.v,std=(2,2),dt=dt)
-        # combine with measurements
-        weights = update(particles,weights,z=zs,R=1,landmarks=lmark_pos)
-
-        # check Effective N
-        if neff(weights) < N/2:
-            indexes = stratified_resample(weights)
-            particles,weights = resample_from_index(particles, weights, indexes)
-            assert np.allclose(weights, 1/N)
-        mu, _ = estimate(particles, weights)
-        xs.append(mu)
-
+        
         
         time += dt
         
@@ -105,15 +85,14 @@ def main():
         v.append(state.v)
         t.append(time)
         lat_error.append(stanley.lat_error)
-        position = np.array([state.x,state.y,state.yaw])
+        
 
         # speed up time if oscilaltions
         if stanley.lat_error > abs(1.5):
             time += 1
 
         if show_animation:
-            Particle = [particles,mu]
-            simple_animation(path,[x,y],lmark_pos,time,max_sim_time,Particle=Particle,plot_particles=True)
+            simple_animation(path,[x,y],lmark_pos,time,max_sim_time)
            
 
     assert last_index >= target_index, "Cannot reach goal"

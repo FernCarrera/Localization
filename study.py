@@ -118,13 +118,13 @@ def stanley(state,cx,cy,last_target_idx):
     
     Arguments:
         state {[State object]} -- [state of object]
-        cx {[float]} -- [description]
-        cy {[float]} -- [description]
-        cyaw {[float]} -- [description]
+        cx {[float]} -- [x-points of path]
+        cy {[float]} -- [y-points of path]
+        
         last_target_idx {[type]} -- [description]
     
     Returns:
-        [type] -- [description]
+        float,int -- heading correction and next point to follow
     """
 
     trgt_idx, error_front_axle = calc_target_index(
@@ -157,11 +157,21 @@ def angle_between(x,y):
 
 def normalize_angle(angle):
 
-    while angle > np.pi:
-        angle -= 2.0 * np.pi
+    if type(angle) is np.ndarray:
+        for x in angle:
+            while x > np.pi:
+                
+                x -= 2.0 * np.pi
 
-    while angle < -np.pi:
-        angle += 2.0 * np.pi
+            while x < -np.pi:
+                x += 2.0 * np.pi
+    else:
+
+        while angle > np.pi:
+            angle -= 2.0 * np.pi
+
+        while angle < -np.pi:
+            angle += 2.0 * np.pi
 
     return angle
 

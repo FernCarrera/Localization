@@ -79,9 +79,10 @@ def make_landmarks(num_landmk,mapv):
     return lmarks
 
 
-def simple_animation(Particle, path,pos,lmark_pos,time,max_sim_time,pause=0.001,plot_particles=True):
-    particles = Particle[0]
-    mu = Particle[1]
+def simple_animation(path,pos,lmark_pos,time,max_sim_time,pause=0.001,Particle=None,plot_particles=False):
+    if Particle is not None:
+        particles = Particle[0]
+        mu = Particle[1]
     
     plt.cla()   # clear current axes
 
@@ -91,17 +92,17 @@ def simple_animation(Particle, path,pos,lmark_pos,time,max_sim_time,pause=0.001,
     
     plt.plot(path[0][:],path[1][:], color="orange", label = 'course')
     plt.plot(path[0][-1],path[1][-1],marker = 'x', color='red')
-    plt.plot(pos[0],pos[1],'-b',label='trajectory')
+    plt.plot(pos[0],pos[1],'-b',label='Vehicle')
     plt.scatter(lmark_pos[:,0],lmark_pos[:,1],marker='P',label='landmarks')
     plt.text(-40,80,"Time Elapsed:{}".format(round(time,3)))
     plt.text(-40,75,"Time Allotted:{}".format(round(max_sim_time,3)),color='r')
 
     if plot_particles:
         plt.scatter(particles[:, 0], particles[:, 1], 
-                    color='k', marker=',', s=1)
+                    color='k', marker=',',label="particles",alpha=0.5, s=1)
         #p1 = plt.scatter(position[0], position[1], marker='+',
         #        color='k', s=180, lw=3)
-        plt.scatter(mu[0], mu[1], marker='s', color='r')
+        plt.scatter(mu[0], mu[1], marker='s',label="estimated pos", color='r')
 
 
     plt.title("Simulation")

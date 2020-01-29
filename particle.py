@@ -1,6 +1,11 @@
 from numpy.random import uniform,randn
 import numpy as np
 import scipy
+from study import normalize_angle
+import pdb
+
+L = 1.9     # [m] wheel base of vehicle (distance between front and rear axle)
+max_steer = np.radians(40.0)    # [rad] max steering agle
 
 def uniform_particles(x_range,y_range,head_range,N):
     """Creates uniformly distributed particles for each
@@ -94,6 +99,28 @@ def predict(particles,u,std,dt=1.):
     particles[:, 1] += np.sin(particles[:, 2]) * dist
 
     return particles
+
+
+def predict_2(particles,u,vel,std,dt=1.):
+        
+    _,delta = u[0],u[1]
+
+    delta = np.clip(delta,-max_steer,max_steer)
+    N = len(particles)
+
+    particles[:,0] += vel * np.cos(particles[:,2]) * dt + (randn(N) * std[0])
+    particles[:,1] += vel * np.sin(particles[:,2]) * dt + (randn(N) * std[0])
+    particles[:,2] += vel / L * np.tan(delta) * dt + (randn(N) * std[1])
+    particles[:,2] = normalize_angle(particles[:,2])
+    """ 
+    self.x += self.v * np.cos(self.yaw) * dt
+    self.y += self.v * np.sin(self.yaw) * dt
+    self.yaw += self.v / L * np.tan(delta) * dt
+    self.yaw = normalize_angle(self.yaw)
+    self.v += acceleration * dt
+    """
+    return particles
+
 
 def update(particles,weights,z,R,landmarks):
     """Sequential Importance Sampling (SIS)

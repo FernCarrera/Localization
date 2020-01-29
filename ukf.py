@@ -204,20 +204,6 @@ def dist_formula(pos,pt1):
 
     return np.sqrt( (pt1[0]-pos[0])**2 + (pt1[1]-pos[1])**2 )
 
-from tools import make_map
-import random
-import copy
-
-
-"""
-sorted list by distance example:
-x1 = [0,1,2,3,4,0,1,2,3,4] 
-y1 = [0,1,2,3,4,3,3,3,3,3]
-
-zpath = map(lambda x,y: [x,y],x1,y1)
-nlist = sorted(zpath,key=lambda pt1: dist_formula(start,pt1) )
-
-"""
 
 def closest_point(pos,path,bumper):
     # TODO if multiple points with same distance, pick rightmost??
