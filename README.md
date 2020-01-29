@@ -6,3 +6,7 @@ This script simulates a vehicle following a path using a PID speed controller an
 ![Sim_Example](/img/SS_sim_preview.png)
 
 ![Metrics_Example](/img/SS_speed_lateral.png)
+
+Particle Filter Demo
+
+![Particle_Demo](/img/particle_filter_demo.gif)
