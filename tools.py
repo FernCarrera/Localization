@@ -4,6 +4,7 @@ from scipy import interpolate
 import matplotlib.pyplot as plt
 from math import cos,sin
 from filterpy.stats import covariance_ellipse
+from matplotlib.pyplot import figure
 
 
 def make_map(points,radius=10,landmarks=0,plot_landmarks=True,random_seed=None):

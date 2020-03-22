@@ -2,10 +2,12 @@ from tools import make_map,simple_animation
 import numpy as np
 import matplotlib.pyplot as plt
 from study import State,PID,stanley,calc_target_index
-from ukf import distance_to,residual_x
+from ukf import distance_to,residual_x,move, Hx,z_mean,residual_h,state_mean
+from study import L as wheelbase
 # -------------- Filter.py ----------------
-from filterpy.kalman import MerweScaledSigmaPoints,UKF
-
+from filterpy.kalman import MerweScaledSigmaPoints
+from filterpy.kalman import UnscentedKalmanFilter as UKF
+from filterpy.stats import plot_covariance_ellipse
 
 
 def main():
@@ -60,15 +62,31 @@ def main():
     # setup UKF
     points = MerweScaledSigmaPoints(n=3,alpha=1e-4,kappa=0.0,beta=2,subtract=residual_x)
 
-    ukf = UKF(dim_x=3, dim_z=2*len(lmark_pos), fx=move, hx=Hx,
+    sigma_range = 0.3
+    sigma_bearing = 0.1
+    
+
+    ukf =   UKF(dim_x=3, dim_z=2*len(lmark_pos), fx=move, hx=Hx,
               dt=dt, points=points, x_mean_fn=state_mean, 
               z_mean_fn=z_mean, residual_x=residual_x, 
               residual_z=residual_h)
 
+    ukf.x = np.array([2, 6, .3])
+    ukf.P = np.diag([.1, .1, .05])
+    ukf.R = np.diag([sigma_range**2,sigma_bearing**2]*5) # 5 landmarks
+
+    ukf.Q = np.eye(3)*0.0001
 
 
 
     while time <= max_sim_time and last_index > target_index:
+        #TODO: make stanley model work with ukf
+        ukf.predict(u=u,wheelbase=wheelbase)
+        if time % 10 == 0:
+            plot_covariance_ellipse(
+                    (ukf.x[0], ukf.x[1]), ukf.P[0:2, 0:2], std=6,
+                     facecolor='k', alpha=0.3)
+        
         # set up controls
         ai = pd.pid_control(target_speed,state.v,lat_error[-1],time)
         di,target_index = stanley(state,x_path,y_path,target_index)

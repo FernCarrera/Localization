@@ -2,6 +2,7 @@
 
 This script simulates a vehicle following a path using a PID speed controller and Stanley heading control. I'm experimenting with Unscented Kalman Filtering and particle filtering for state tracking and localization that utilize sensor data from known landmark locations
 
+[Link to Stanford Stanley Paper](http://ai.stanford.edu/~gabeh/papers/hoffmann_stanley_control07.pdf)
 
 ![Sim_Example](/img/SS_sim_preview.png)
 

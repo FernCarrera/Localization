@@ -124,7 +124,10 @@ def main():
         plt.legend()
         plt.xlabel("x[m]")
         plt.ylabel("y[m]")
+        plt.ylim((-5,80))
+        plt.xlim((-45,80))
         plt.grid(True)
+
 
         _, (ax1,ax2) = plt.subplots(2,sharex='row')
         ax1.plot(t, [iv * 3.6 for iv in v], "-r")
